@@ -374,6 +374,10 @@ int main(int argc, char* arcv[])
 	Figure circle(points_circle, v.x, v.y, s1, speed);
 	//circle
 
+	std::vector <Figure> figures;
+	figures.push_back(circle);
+	figures.push_back(figure);
+
 	int x0 = wWidth / 2;
 	int y0 = wHeight / 2;
 
@@ -409,7 +413,9 @@ int main(int argc, char* arcv[])
 			}
 
 		//Point CenterOfRotate = { 0, 0 };
-		Point CenterOfRotate = figure.points[0];
+		//Point CenterOfRotate = figure.points[0];
+		
+
 		//If not pause that objects moved
 		if (!isPause)
 		{
@@ -417,8 +423,10 @@ int main(int argc, char* arcv[])
 			double dist = speed / 10;
 			//figure.Rotate(dist, x0, y0, CenterOfRotate);
 
-			figure.Move(false);
-			circle.Move(false);
+			for (int i = 0; i < figures.size(); ++i)
+			{
+				figures[i].Move(false);
+			}
 		}
 
 		//Collision(square1, square2);
@@ -429,13 +437,16 @@ int main(int argc, char* arcv[])
 		timeout = SDL_GetTicks64() + delay;
 		while (SDL_GetTicks64() < timeout)
 		{			
-			Point CenterOfMass = figure.CenterMass();
-			figure.Show(x0, y0);
-			circle.Show(x0, y0);
+			Point CenterOfMass = figures[1].CenterMass();
+			for (int i = 0; i < figures.size(); ++i)
+			{
+				figures[i].Show(x0, y0);
+			}
+
 			//SDL_RenderDrawLine(ren, x0 + CenterOfRotate.x, y0 - CenterOfRotate.y, x0 + CenterOfMass.x, y0 - CenterOfMass.y);
 
 			SDL_SetRenderDrawColor(ren, 255, 0, 255, 255);
-			SDL_RenderDrawLine(ren, x0 + CenterOfMass.x + figure.V.x * 20, y0 - CenterOfMass.y - figure.V.y * 20, x0 + CenterOfMass.x, y0 - CenterOfMass.y);
+			SDL_RenderDrawLine(ren, x0 + CenterOfMass.x + figures[1].V.x * 20, y0 - CenterOfMass.y - figures[1].V.y * 20, x0 + CenterOfMass.x, y0 - CenterOfMass.y);
 		}
 
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
