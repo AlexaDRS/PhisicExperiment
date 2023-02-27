@@ -38,13 +38,13 @@ public:
 
 	double speed = 0;
 
-	Figure(std::vector <Point> sPoints, double vX, double vY, SDL_Color& dColor, double dSpeed = 1)
+	Figure(std::vector <Point> sPoints, double& vX, double& vY, SDL_Color& dColor, double dSpeed = 1)
 	{
 		for (int i = 0; i < sPoints.size(); i++)
 		{	
 			points.push_back(sPoints[i]);
 		}
-		std::cout << points.size();
+		//std::cout << points.size();
 		V = { vX, vY };
 		color = dColor;
 		speed = dSpeed;
@@ -312,9 +312,26 @@ double Speed(double pixels)
 	return speed;
 }
 
-void AddObject()
+Figure CreateCircle(Point& center, double& vX, double& vY, SDL_Color& dColor, double dSpeed = 1, int countPoints = 12, double radius = 40)
 {
+	std::vector <Point> points_circle;
 
+		for (int i = 0; i < countPoints; ++i)
+		{
+			double rad = (i * 2 * M_PI) / countPoints;
+			double x = center.x + (cos(rad) * radius);
+			double y = center.y + (sin(rad) * radius);
+			Point point(x, y);
+			points_circle.push_back(point);
+
+			/*TEST
+			std::cout << rad << "\n";
+			std::cout << i << ": { x: " << x << " y: " << y << " }\n";
+			*/
+		}
+
+	Figure circle(points_circle, vX, vY, dColor, dSpeed);
+	return circle;
 }
 
 
@@ -343,49 +360,36 @@ int main(int argc, char* arcv[])
 	f.push_back(C);
 	f.push_back(D);
 
-	SDL_Color s1{ 255,0,0,255 };
+	SDL_Color colors{ 255,0,0,255 };
 
 	speed = Speed(500);
 
-	Figure figure(f, v.x, v.y, s1, speed);
+	Figure figure(f, v.x, v.y, colors, speed);
 
 	// hard figure
 
-	std::vector <Point> points_circle;
-	//circle
-	{
-		std::cout << "\n";
-		int points_count = 12;
-		double radius = 40;
-		Point center(-10, 100);
-		
-		for (int i = 0; i < points_count; ++i)
-		{
-			double rad = (i * 2 * M_PI) / points_count;
-			std::cout << rad << "\n";
-			double x = center.x + (cos(rad) * radius);
-			double y = center.y + (sin(rad) * radius);
-			Point point(x, y);
-			points_circle.push_back(point);
-			std::cout << i << ": { x: " << x << " y: " << y << " }\n";
-		}
-	}
-
-	Figure circle(points_circle, v.x, v.y, s1, speed);
-	//circle
+	Point center{ -10, 100 };
 
 	std::vector <Figure> figures;
-	figures.push_back(circle);
+	figures.push_back(CreateCircle(center, v.x, v.y, colors));
 	figures.push_back(figure);
+	
+	center = { 0, 0 };
+	Figure ActiveFigure = CreateCircle(center, v.x, v.y, colors, 0, 12, 0);
 
 	int x0 = wWidth / 2;
 	int y0 = wHeight / 2;
 
 	int timeout = 0;
 	double squareTime = SDL_GetTicks64();
+
 	bool isPause = true;
 	bool isProcess = true;
+	bool isCreatingCircle = false;
+	bool isClicked = false;
+	bool isAxis = false;
 
+	Point Click {0, 0};
 	int a = 0.1;
 	while (isProcess)
 	{
@@ -396,6 +400,52 @@ int main(int argc, char* arcv[])
 		while (SDL_PollEvent(&ev))
 			switch (ev.type)
 			{
+			case SDL_MOUSEBUTTONDOWN:
+				if (ev.button.button == SDL_BUTTON_LEFT && isCreatingCircle && isClicked)
+				{
+					Click.x = 0;
+					Click.y = 0;
+					isCreatingCircle = false;
+					isClicked = false;
+					
+					figures.push_back(ActiveFigure);
+					//std::cout << figures.size() << "\n";
+				}
+				else if (ev.button.button == SDL_BUTTON_LEFT && isCreatingCircle)
+				{
+					int x, y;   
+					SDL_GetMouseState(&x, &y);
+
+					Click.x = x;
+					Click.y = y;
+					isClicked = true;
+					SDL_Color tc{ rand() % 255, rand() % 255, rand() % 255, 255 };
+					colors = tc;
+				}
+					break;
+			case SDL_MOUSEMOTION:
+				if (isCreatingCircle && isClicked)
+				{
+					double vX = 0;
+					double vY = 0;
+
+					int x, y;
+					SDL_GetMouseState(&x, &y);
+
+					Point Center(0, 0);
+					Center.x = (Click.x + x) / 2 - x0;
+					Center.y = y0 - (Click.y + y) / 2;
+
+					double radius = sqrtf((Click.x - x) * (Click.x - x) + (Click.y - y) * (Click.y - y))/2;
+
+					ActiveFigure = CreateCircle(Center, vX, vY, colors, 0, 100, radius);
+					
+					/*TEST
+					std::cout << " CENTER:" << Center.x << " " << Center.y << "\n"
+						<< "RADIUS: " << radius << "\n";
+					*/
+				}
+				break;
 			case SDL_KEYDOWN:
 				switch (ev.key.keysym.scancode)
 				{
@@ -407,9 +457,14 @@ int main(int argc, char* arcv[])
 					break;
 				case SDL_SCANCODE_RIGHT: speed +=10;
 					break;
+				case SDL_SCANCODE_C: {isCreatingCircle ? isCreatingCircle = false : isCreatingCircle = true; isClicked = false; }
+					break;
+				case SDL_SCANCODE_A: isAxis ? isAxis = false : isAxis = true;
+					break;
 				}
 				break;
 			case SDL_QUIT:isProcess = false;
+				break;
 			}
 
 		//Point CenterOfRotate = { 0, 0 };
@@ -425,13 +480,15 @@ int main(int argc, char* arcv[])
 
 			for (int i = 0; i < figures.size(); ++i)
 			{
-				figures[i].Move(false);
+				figures[i].Move(true);
 			}
 		}
 
 		//Collision(square1, square2);
 
 		//GRAPHIC PART
+		if (isAxis)
+
 		showAxes(x0, y0);
 
 		timeout = SDL_GetTicks64() + delay;
@@ -443,10 +500,20 @@ int main(int argc, char* arcv[])
 				figures[i].Show(x0, y0);
 			}
 
+			if (isClicked && isCreatingCircle)
+			{
+				int x, y;
+				SDL_GetMouseState(&x, &y);
+
+				SDL_SetRenderDrawColor(ren, 0, 255, 255, 255);
+				SDL_RenderDrawLine(ren, Click.x, Click.y, x, y);
+
+				ActiveFigure.Show(x0, y0);
+			}
 			//SDL_RenderDrawLine(ren, x0 + CenterOfRotate.x, y0 - CenterOfRotate.y, x0 + CenterOfMass.x, y0 - CenterOfMass.y);
 
-			SDL_SetRenderDrawColor(ren, 255, 0, 255, 255);
-			SDL_RenderDrawLine(ren, x0 + CenterOfMass.x + figures[1].V.x * 20, y0 - CenterOfMass.y - figures[1].V.y * 20, x0 + CenterOfMass.x, y0 - CenterOfMass.y);
+				SDL_SetRenderDrawColor(ren, 255, 0, 255, 255);
+				SDL_RenderDrawLine(ren, x0 + CenterOfMass.x + figures[1].V.x * 20, y0 - CenterOfMass.y - figures[1].V.y * 20, x0 + CenterOfMass.x, y0 - CenterOfMass.y);			
 		}
 
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
