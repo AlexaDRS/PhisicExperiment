@@ -36,14 +36,15 @@ public:
 
 	SDL_Color color;
 
-	double speed = 0;
+	double speed = 1;
 
-	Figure(std::vector <Point> sPoints, double& vX, double& vY, SDL_Color& dColor, double dSpeed = 1)
+	Figure(std::vector <Point> sPoints, double vX = 0, double vY = 0, SDL_Color dColor = {0,0,0,0}, double dSpeed = 1)
 	{
 		for (int i = 0; i < sPoints.size(); i++)
 		{	
 			points.push_back(sPoints[i]);
 		}
+
 		//std::cout << points.size();
 		V = { vX, vY };
 		color = dColor;
@@ -312,7 +313,7 @@ double Speed(double pixels)
 	return speed;
 }
 
-Figure CreateCircle(Point& center, double& vX, double& vY, SDL_Color& dColor, double dSpeed = 1, int countPoints = 12, double radius = 40)
+Figure CreateCircle(Point& center, double vX = 0, double vY = 0, SDL_Color dColor = { 0,0,0,0 }, double dSpeed = 1, int countPoints = 100, double radius = 40)
 {
 	std::vector <Point> points_circle;
 
@@ -345,7 +346,7 @@ int main(int argc, char* arcv[])
 
 	double speed(0);
 
-	// hard figure
+	/* hard figure
 
 	Point v(7, 5);
 	Point A(-170, -80);
@@ -366,16 +367,14 @@ int main(int argc, char* arcv[])
 
 	Figure figure(f, v.x, v.y, colors, speed);
 
-	// hard figure
-
-	Point center{ -10, 100 };
+	 hard figure */
 
 	std::vector <Figure> figures;
-	figures.push_back(CreateCircle(center, v.x, v.y, colors));
-	figures.push_back(figure);
-	
-	center = { 0, 0 };
-	Figure ActiveFigure = CreateCircle(center, v.x, v.y, colors, 0, 12, 0);
+	SDL_Color colors{ 255,0,0,255 };
+	Point v(7, 5);
+	Point center = { 0, 0 };
+
+	Figure ActiveFigure = CreateCircle(center);
 
 	int x0 = wWidth / 2;
 	int y0 = wHeight / 2;
@@ -391,6 +390,7 @@ int main(int argc, char* arcv[])
 
 	Point Click {0, 0};
 	int a = 0.1;
+	
 	while (isProcess)
 	{
 		//LOGIC PART
@@ -409,7 +409,6 @@ int main(int argc, char* arcv[])
 					isClicked = false;
 					
 					figures.push_back(ActiveFigure);
-					//std::cout << figures.size() << "\n";
 				}
 				else if (ev.button.button == SDL_BUTTON_LEFT && isCreatingCircle)
 				{
@@ -488,13 +487,13 @@ int main(int argc, char* arcv[])
 
 		//GRAPHIC PART
 		if (isAxis)
+			showAxes(x0, y0);
 
-		showAxes(x0, y0);
-
+		
 		timeout = SDL_GetTicks64() + delay;
 		while (SDL_GetTicks64() < timeout)
 		{			
-			Point CenterOfMass = figures[1].CenterMass();
+		//	Point CenterOfMass = figures[0].CenterMass();
 			for (int i = 0; i < figures.size(); ++i)
 			{
 				figures[i].Show(x0, y0);
@@ -513,7 +512,7 @@ int main(int argc, char* arcv[])
 			//SDL_RenderDrawLine(ren, x0 + CenterOfRotate.x, y0 - CenterOfRotate.y, x0 + CenterOfMass.x, y0 - CenterOfMass.y);
 
 				SDL_SetRenderDrawColor(ren, 255, 0, 255, 255);
-				SDL_RenderDrawLine(ren, x0 + CenterOfMass.x + figures[1].V.x * 20, y0 - CenterOfMass.y - figures[1].V.y * 20, x0 + CenterOfMass.x, y0 - CenterOfMass.y);			
+			//	SDL_RenderDrawLine(ren, x0 + CenterOfMass.x + figures[1].V.x * 20, y0 - CenterOfMass.y - figures[1].V.y * 20, x0 + CenterOfMass.x, y0 - CenterOfMass.y);			
 		}
 
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
